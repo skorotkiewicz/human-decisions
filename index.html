@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#244c3c">
+  <meta name="description" content="A little more human judgment. Ask questions, help someone decide, and get answers from real people.">
+  <title>Human Decisions | A little more human</title>
+  <link rel="stylesheet" href="./frontend.css">
+  <script type="module" src="./frontend.ts"></script>
+</head>
+<body>
+  <header class="site-header wrap">
+    <a class="brand" href="/" aria-label="Human Decisions home"><span class="brand-mark" aria-hidden="true">h.</span> human decisions</a>
+    <span class="local-badge"><span aria-hidden="true"></span> Local workspace</span>
+  </header>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="headline">
+      <div><p class="eyebrow">REAL PEOPLE. THOUGHTFUL ANSWERS.</p><h1 id="headline">Good decisions.<br><span>Made by people.</span></h1><p class="intro">Some questions need a human touch. Bring your context,<br class="desktop-break"> lend your judgment, and help a good answer find its way.</p></div>
+      <div class="hero-note"><span class="note-symbol" aria-hidden="true">✳</span><p>Not an algorithm.<br><strong>A different perspective.</strong></p><span class="note-caption">One question. One human answer.</span></div>
+    </section>
+    <div class="workspace-nav" aria-label="Workspace views">
+      <button id="answer-tab" type="button" class="view-button active" aria-pressed="true" aria-controls="answer-view">Lend a hand <span id="queue-count" class="count">0</span></button>
+      <button id="ask-tab" type="button" class="view-button" aria-pressed="false" aria-controls="ask-view">Ask a question <span aria-hidden="true">↗</span></button>
+    </div>
+    <p id="notice" class="notice" role="status" aria-live="polite" hidden></p>
+    <section id="answer-view" class="workspace" aria-labelledby="queue-heading">
+      <aside class="panel queue-panel">
+        <div class="panel-heading"><div><p class="eyebrow">THE INBOX</p><h2 id="queue-heading">Waiting for a human</h2></div><button id="refresh-queue" type="button" class="icon-button" aria-label="Refresh unanswered requests">↻</button></div>
+        <p class="muted small">Oldest first. Every perspective helps.</p>
+        <div id="queue-list" class="queue-list" aria-live="polite"><p class="muted">Loading requests…</p></div>
+        <p class="queue-footnote">Up to 100 requests. First complete answer wins.</p>
+      </aside>
+      <section id="decision-panel" class="panel decision-panel" aria-label="Answer a request">
+        <div class="empty-state"><span class="empty-symbol" aria-hidden="true">☀</span><h2>A little quiet is a good thing.</h2><p>Select a request to lend your judgment,<br>or ask the first question.</p><button id="empty-ask" class="secondary-button" type="button">Start a conversation ↗</button></div>
+      </section>
+    </section>
+    <section id="ask-view" class="workspace" aria-labelledby="ask-heading" hidden>
+      <section class="panel compose-panel">
+        <p class="eyebrow">MAKE ROOM FOR ANOTHER PERSPECTIVE</p><h2 id="ask-heading">What would you like to know?</h2><p class="muted">Give someone the context they need to make a thoughtful call.</p>
+        <form id="ask-form">
+          <label for="context">The context</label><textarea id="context" name="context" rows="4" placeholder="A customer says their parcel arrived damaged and asks for a refund…" required maxlength="100000"></textarea>
+          <div class="section-label"><h3>Your questions</h3><span class="muted small">One request, a few different angles.</span></div>
+          <div id="question-list"></div>
+          <button id="add-question" type="button" class="text-button">+ Add another question</button>
+          <div class="form-footer"><span class="muted small">A human will answer when they’re ready.</span><button id="submit-request" class="primary-button" type="submit">Send to the inbox <span aria-hidden="true">↗</span></button></div>
+        </form>
+      </section>
+      <aside class="ask-sidebar">
+        <section class="panel guide"><p class="eyebrow">A SMALL FIELD GUIDE</p><h2>Three ways to ask.</h2><div><span class="type-badge">YES / NO</span><h3>A simple judgment</h3><p>“Is this customer asking for a refund?” A probability from no to yes.</p></div><div><span class="type-badge">CHOICE</span><h3>The right direction</h3><p>“Which team should handle this?” Give your human a few options.</p></div><div><span class="type-badge">SCALE</span><h3>A matter of degree</h3><p>“How urgent is this?” Describe your scale, from low to high.</p></div></section>
+        <section class="panel lookup-panel"><h2>Follow an answer</h2><p class="muted small">Have a request ID? Pick up where you left off.</p><form id="lookup-form"><label for="lookup-id">Request ID</label><input id="lookup-id" placeholder="gen-dec-…" required><button class="secondary-button" type="submit">Check result ↗</button></form><div id="result" aria-live="polite"></div></section>
+      </aside>
+    </section>
+    <footer><span>Human judgment, on purpose.</span><span>Local & trusted · No AI answers</span></footer>
+  </main>
+  <template id="question-template">
+    <fieldset class="question-editor"><legend>Question</legend><div class="question-toolbar"><label>Answer format<select class="question-type"><option value="noul">Yes / no</option><option value="choice">Pick an option</option><option value="score">Rate on a scale</option></select></label><button class="remove-question text-button" type="button" aria-label="Remove this question">Remove</button></div><label>Your question<input class="question-instructions" placeholder="Does the customer request a refund?" required maxlength="2000"></label><label class="criteria-label" hidden>Options, one per line<textarea class="question-criteria" rows="3" placeholder="Billing&#10;Technical support&#10;Sales"></textarea><span class="muted small">For a scale, put the lowest label first. At least two labels.</span></label></fieldset>
+  </template>
+</body>
+</html>

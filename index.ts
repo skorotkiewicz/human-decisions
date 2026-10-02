@@ -1,11 +1,12 @@
 import { Database } from "bun:sqlite";
+import website from "./index.html";
 
-type Question = {
+export type Question = {
   type: "noul" | "choice" | "score";
   instructions: string;
   criteria?: Record<string, string> | string[];
 };
-type Decision = { model: string; state: unknown; questions: Record<string, Question> };
+export type Decision = { model: string; state: unknown; questions: Record<string, Question> };
 type Row = { id: string; request: string; response: string | null };
 
 class InputError extends Error {}
@@ -89,6 +90,7 @@ export function startServer({ database = "decisions.sqlite", port = 8001 }: { da
     hostname: "127.0.0.1",
     port,
     maxRequestBodySize: 1024 * 1024,
+    routes: { "/": website },
     async fetch(req) {
       try {
         const path = new URL(req.url).pathname;
