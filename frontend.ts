@@ -78,10 +78,12 @@ function setup() {
 
   function showEmpty(title: string, description: string) {
     const empty = el("div", "", "empty-state");
-    const button = el("button", "Ask a question ↗", "secondary-button");
+    const button = el("button", "Create a request ↗", "primary-button");
     button.type = "button";
     button.onclick = () => showView("ask");
-    empty.append(el("span", "✳", "empty-symbol"), el("h2", title), el("p", description), button);
+    const symbol = el("span", "", "empty-symbol");
+    symbol.setAttribute("aria-hidden", "true");
+    empty.append(el("p", "ROOM FOR YOUR PERSPECTIVE", "eyebrow"), symbol, el("h2", title), el("p", description), button, el("span", "Real people. Considered answers.", "empty-caption"));
     panel.replaceChildren(empty);
   }
 
@@ -111,11 +113,11 @@ function setup() {
       item.classList.toggle("selected", selected);
       item.setAttribute("aria-pressed", String(selected));
     }
-    const heading = el("h2", "A little context, then your call.");
+    const heading = el("h2", "Read the context. Make your call.");
     heading.tabIndex = -1;
     const context = el("div", "", "context-box");
     const state = typeof decision.state === "string" ? decision.state : JSON.stringify(decision.state, null, 2);
-    context.append(el("p", state));
+    context.append(el("p", "THE CONTEXT", "eyebrow"), el("p", state));
     const form = el("form");
     const readers: [string, () => ReturnType<typeof buildAnswer>][] = [];
     Object.entries(decision.questions).forEach(([name, question], index) => {
@@ -152,13 +154,14 @@ function setup() {
       form.append(fieldset);
     });
     const footer = el("div", "", "form-footer");
-    const submit = el("button", "Send your answer ↗", "primary-button");
+    const submit = el("button", "Send answer ↗", "primary-button");
     submit.type = "submit";
     footer.append(el("span", "Your judgment makes the difference.", "muted small"), submit);
     form.append(el("p", "Choice and scale answers send a definite selection (probability 1). For mixed probabilities or fractional scores, use the API.", "answer-note"), footer);
     form.onsubmit = async event => {
       event.preventDefault();
       submit.disabled = true;
+      submit.textContent = "Sending answer…";
       try {
         const answers = Object.fromEntries(readers.map(([name, read]) => [name, read()]));
         await api(`/v1/decisions/${encodeURIComponent(decision.id)}/answers`, { answers });
@@ -167,17 +170,19 @@ function setup() {
         message("Answer delivered. Someone has a little more clarity now.");
         await loadQueue();
       } catch (error) { report(error); }
-      finally { submit.disabled = false; }
+      finally { submit.disabled = false; submit.textContent = "Send answer ↗"; }
     };
-    panel.replaceChildren(el("p", "YOUR HUMAN JUDGMENT", "eyebrow"), heading, context, form);
+    panel.replaceChildren(el("p", `YOUR HUMAN JUDGMENT / ${decision.id.slice(-8)}`, "eyebrow"), heading, context, form);
     heading.focus({ preventScroll: true });
   }
 
   async function loadQueue() {
     refresh.disabled = true;
+    queueList.setAttribute("aria-busy", "true");
     try {
       const { decisions } = await api<{ decisions: Pending[] }>("/poll");
       get("#queue-count").textContent = String(decisions.length);
+      get("#queue-count").setAttribute("aria-label", `${decisions.length} open requests`);
       queueList.replaceChildren();
       if (!decisions.length) queueList.append(el("p", "All caught up. New requests will appear here when you refresh.", "muted small"));
       for (const decision of decisions) {
@@ -197,7 +202,7 @@ function setup() {
         showEmpty("Someone got there first.", "This request is no longer in the inbox. Choose another to help.");
       }
     } catch (error) { report(error); }
-    finally { refresh.disabled = false; }
+    finally { refresh.disabled = false; queueList.setAttribute("aria-busy", "false"); }
   }
   refresh.onclick = () => void loadQueue();
 
@@ -205,6 +210,7 @@ function setup() {
     const fragment = get<HTMLTemplateElement>("#question-template").content.cloneNode(true) as DocumentFragment;
     const fieldset = get<HTMLFieldSetElement>("fieldset", fragment);
     fieldset.dataset.name = `question_${++questionNumber}`;
+    get("legend", fieldset).textContent = `Question ${String(questionNumber).padStart(2, "0")}`;
     const type = get<HTMLSelectElement>(".question-type", fieldset);
     const criteria = get<HTMLTextAreaElement>(".question-criteria", fieldset);
     const update = () => {
@@ -226,6 +232,7 @@ function setup() {
     event.preventDefault();
     const submit = get<HTMLButtonElement>("#submit-request");
     submit.disabled = true;
+    submit.textContent = "Sending request…";
     try {
       const questions = Object.fromEntries([...questionList.querySelectorAll<HTMLFieldSetElement>("fieldset")].map(fieldset => {
         const type = get<HTMLSelectElement>(".question-type", fieldset).value as Question["type"];
@@ -245,7 +252,7 @@ function setup() {
       await loadQueue();
       // Keep the draft intact so network errors never discard someone's work.
     } catch (error) { report(error); }
-    finally { submit.disabled = false; }
+    finally { submit.disabled = false; submit.textContent = "Send request ↗"; }
   };
 
   async function checkResult() {
@@ -269,8 +276,9 @@ function setup() {
     event.preventDefault();
     const button = get<HTMLButtonElement>("button", get("#lookup-form"));
     button.disabled = true;
+    button.textContent = "Checking…";
     try { await checkResult(); } catch (error) { report(error); }
-    finally { button.disabled = false; }
+    finally { button.disabled = false; button.textContent = "Check result ↗"; }
   };
   void loadQueue();
 }
