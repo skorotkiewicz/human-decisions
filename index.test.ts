@@ -52,6 +52,12 @@ test("humans poll, answer all question types, and retrieve durable decisions", a
     expect(html).toContain('id="ask-form"');
     expect(html).toContain("Public workspace");
     expect(html).toContain("Public &amp; anonymous");
+    const faviconPath = html.match(/<link[^>]+rel="icon"[^>]+href="([^"]+)"/)?.[1];
+    expect(faviconPath).toBeDefined();
+    const favicon = await request(faviconPath!);
+    expect(favicon.status).toBe(200);
+    expect(favicon.headers.get("Content-Type")).toContain("image/svg+xml");
+    expect(await favicon.text()).toContain('viewBox="0 0 64 64"');
     const assets = [...html.matchAll(/(?:src|href)="([^\"]+\.(?:js|css)(?:\?[^\"]*)?)"/g)];
     expect(assets.length).toBeGreaterThanOrEqual(2);
     for (const asset of assets) expect((await request(asset[1]!)).status).toBe(200);
