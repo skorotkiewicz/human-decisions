@@ -87,7 +87,8 @@ export function startServer({ database = "decisions.sqlite", port = 8001 }: { da
   const answer = db.query("UPDATE decisions SET response = ? WHERE id = ? AND response IS NULL");
   const json = Response.json;
   const server = Bun.serve({
-    hostname: "127.0.0.1",
+    hostname: "0.0.0.0",
+    development: false,
     port,
     maxRequestBodySize: 1024 * 1024,
     routes: { "/": website },

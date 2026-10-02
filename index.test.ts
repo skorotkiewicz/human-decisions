@@ -42,12 +42,16 @@ test("humans poll, answer all question types, and retrieve durable decisions", a
     frustration: { type: "score", score: 1.04, probabilities: { "0": 0, "1": 0.96, "2": 0.04 }, confidence: 0.93 },
   };
   try {
+    expect(app.server.hostname).toBe("0.0.0.0");
+    expect(app.server.development).toBe(false);
     const homepage = await request("/");
     expect(homepage.status).toBe(200);
     expect(homepage.headers.get("Content-Type")).toContain("text/html");
     const html = await homepage.text();
     expect(html).toContain("Good decisions.");
     expect(html).toContain('id="ask-form"');
+    expect(html).toContain("Public workspace");
+    expect(html).toContain("Public &amp; anonymous");
     const assets = [...html.matchAll(/(?:src|href)="([^\"]+\.(?:js|css)(?:\?[^\"]*)?)"/g)];
     expect(assets.length).toBeGreaterThanOrEqual(2);
     for (const asset of assets) expect((await request(asset[1]!)).status).toBe(200);

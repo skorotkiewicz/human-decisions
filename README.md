@@ -8,11 +8,11 @@ bun run index.ts
 bun test
 ```
 
-The server listens on `127.0.0.1:8001`. Configure `PORT` and `DATABASE_PATH` through environment variables. The default database is `decisions.sqlite`; requests and answers survive restarts.
+The server listens on `0.0.0.0:8001` (all IPv4 interfaces) for public, anonymous access. Configure `PORT` and `DATABASE_PATH` through environment variables. The default database is `decisions.sqlite`; requests and answers survive restarts.
 
 ## Website
 
-Open **http://127.0.0.1:8001** after starting the server. The responsive workspace lets you:
+Open **http://127.0.0.1:8001** on the server, or **http://<server-ip>:8001** remotely when your firewall allows it. For an internet deployment, point your domain and an HTTPS reverse proxy at the service. No accounts or API keys are required. The responsive workspace lets you:
 
 - Submit context and multiple yes/no, choice, or scale questions.
 - Refresh the unanswered inbox and submit human answers with native controls.
@@ -55,4 +55,4 @@ curl http://127.0.0.1:8001/v1/decisions/ID
 
 Choice and score probabilities must cover exactly every option and sum to 1, within a tolerance of 0.000001. Confidence ranges from 0 to 1. Humans supply all probabilities, confidence, and scores; the server validates their shape and bounds, not their subjective judgment. Malformed submissions return **400** without consuming a pending request; unknown IDs return **404**. Request bodies are limited to 1 MiB.
 
-This is a local, trusted-agent service without authentication or task claiming. Polling does not reserve work, so agents can duplicate effort. Put authentication and access controls in front of it before exposing sensitive questions or allowing remote agents. There is no AI answering layer.
+This service is public and anonymous by design. Anyone can submit questions, view pending context, and answer without an account or API key. Treat submitted context and answers as public, not private. Polling does not reserve work, so agents can duplicate effort; the first valid complete answer wins. There is no task claiming or AI answering layer.
