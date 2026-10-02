@@ -18,7 +18,7 @@ async function json(url: string | URL, body?: unknown, apiKey?: string) {
   return data;
 }
 
-export async function pollOnce(decisionsUrl: string, systemoneUrl: string, apiKey?: string) {
+export async function pollOnce(decisionsUrl: string, systemoneUrl: string, apiKey?: string, model?: string) {
   const queue = await json(new URL("/poll", decisionsUrl));
   if (!Array.isArray(queue.decisions)) throw new Error("/poll: expected a decisions array");
   // ponytail: sequential inference for a single model backend; add concurrency if it supports parallel requests.
@@ -27,7 +27,7 @@ export async function pollOnce(decisionsUrl: string, systemoneUrl: string, apiKe
       if (!object(decision) || typeof decision.id !== "string" || !decision.id || !Object.hasOwn(decision, "state") || !object(decision.questions)) {
         throw new Error("/poll: malformed decision");
       }
-      const prediction = await json(systemoneUrl, { state: decision.state, questions: decision.questions }, apiKey);
+      const prediction = await json(systemoneUrl, { ...(model ? { model } : {}), state: decision.state, questions: decision.questions }, apiKey);
       if (!object(prediction.answers)) throw new Error("SystemOne: expected an answers object");
       const response = await fetch(new URL(`/v1/decisions/${encodeURIComponent(decision.id)}/answers`, decisionsUrl), {
         method: "POST",
@@ -56,7 +56,7 @@ if (import.meta.main) {
   new URL(systemoneUrl);
   console.log(`Bot watching ${decisionsUrl}/poll using ${systemoneUrl}`);
   while (true) {
-    try { await pollOnce(decisionsUrl, systemoneUrl, Bun.env.SYSTEMONE_API_KEY); }
+    try { await pollOnce(decisionsUrl, systemoneUrl, Bun.env.SYSTEMONE_API_KEY, Bun.env.SYSTEMONE_MODEL); }
     catch (error) { console.error(error instanceof Error ? error.message : error); }
     await Bun.sleep(interval);
   }

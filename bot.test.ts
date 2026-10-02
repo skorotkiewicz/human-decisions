@@ -2,25 +2,28 @@ import { expect, spyOn, test } from "bun:test";
 import { startServer } from "./index";
 import { pollOnce } from "./bot";
 
-test("optional Bearer auth goes only to the model endpoint", async () => {
-  const requests: { path: string; authorization: string | null }[] = [];
+test("optional Bearer auth and model selection go only to the model endpoint", async () => {
+  const requests: { path: string; authorization: string | null; body: unknown }[] = [];
   const service = Bun.serve({
     hostname: "127.0.0.1", port: 0,
-    fetch(req) {
+    async fetch(req) {
       const path = new URL(req.url).pathname;
-      requests.push({ path, authorization: req.headers.get("Authorization") });
+      requests.push({ path, authorization: req.headers.get("Authorization"), body: req.method === "POST" ? await req.json() : undefined });
       if (path === "/poll") return Response.json({ decisions: [{ id: "test", state: "The box is blue.", questions: { box: { type: "noul", instructions: "Is the box blue?" } } }] });
       if (path === "/v1/systemone") return Response.json({ answers: { box: { type: "noul", noul: 1 } } });
       return Response.json({ status: "answered" });
     },
   });
   try {
-    for (const apiKey of [undefined, "", "test-api-key"]) {
-      await pollOnce(String(service.url), new URL("/v1/systemone", service.url).href, apiKey);
+    for (const [apiKey, model] of [[undefined, undefined], ["", ""], ["test-api-key", undefined], [undefined, "typesafe/jev-1.13"], ["test-api-key", "typesafe/jev-1.13"]]) {
+      await pollOnce(String(service.url), new URL("/v1/systemone", service.url).href, apiKey, model);
       expect(requests.splice(0)).toEqual([
-        { path: "/poll", authorization: null },
-        { path: "/v1/systemone", authorization: apiKey ? `Bearer ${apiKey}` : null },
-        { path: "/v1/decisions/test/answers", authorization: null },
+        { path: "/poll", authorization: null, body: undefined },
+        {
+          path: "/v1/systemone", authorization: apiKey ? `Bearer ${apiKey}` : null,
+          body: { ...(model ? { model } : {}), state: "The box is blue.", questions: { box: { type: "noul", instructions: "Is the box blue?" } } },
+        },
+        { path: "/v1/decisions/test/answers", authorization: null, body: { answers: { box: { type: "noul", noul: 1 } } } },
       ]);
     }
   } finally {
