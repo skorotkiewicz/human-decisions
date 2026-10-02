@@ -3,6 +3,19 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startServer } from "./index";
+import { buildAnswer } from "./frontend";
+
+test("website selections produce valid API answers without inventing distributions", () => {
+  const noul = { type: "noul", instructions: "Yes?" } as const;
+  const choice = { type: "choice", instructions: "Team?", criteria: { billing: "Billing", technical: "Technical" } } as const;
+  const score = { type: "score", instructions: "Urgency?", criteria: ["Low", "High"] } as const;
+  expect(buildAnswer(noul, "0.73")).toEqual({ type: "noul", noul: 0.73 });
+  expect(buildAnswer(choice, "billing", 0.8)).toEqual({ type: "choice", choice: "billing", probabilities: { billing: 1, technical: 0 }, confidence: 0.8 });
+  expect(buildAnswer({ ...score, criteria: [...score.criteria] }, "0", 0.9)).toEqual({ type: "score", score: 0, probabilities: { "0": 1, "1": 0 }, confidence: 0.9 });
+  for (const invalid of ["", "no", "-1", "1.01"]) expect(() => buildAnswer(noul, invalid)).toThrow();
+  expect(() => buildAnswer(choice, "missing")).toThrow();
+  expect(() => buildAnswer(choice, "billing", 1.1)).toThrow();
+});
 
 test("humans poll, answer all question types, and retrieve durable decisions", async () => {
   const directory = await mkdtemp(join(tmpdir(), "human-decisions-"));
@@ -29,6 +42,15 @@ test("humans poll, answer all question types, and retrieve durable decisions", a
     frustration: { type: "score", score: 1.04, probabilities: { "0": 0, "1": 0.96, "2": 0.04 }, confidence: 0.93 },
   };
   try {
+    const homepage = await request("/");
+    expect(homepage.status).toBe(200);
+    expect(homepage.headers.get("Content-Type")).toContain("text/html");
+    const html = await homepage.text();
+    expect(html).toContain("Good decisions.");
+    expect(html).toContain('id="ask-form"');
+    const assets = [...html.matchAll(/(?:src|href)="([^\"]+\.(?:js|css)(?:\?[^\"]*)?)"/g)];
+    expect(assets.length).toBeGreaterThanOrEqual(2);
+    for (const asset of assets) expect((await request(asset[1]!)).status).toBe(200);
     expect((await request("/poll")).status).toBe(200);
     expect(await (await request("/poll")).json()).toEqual({ decisions: [] });
     for (const body of [null, {}, { state: "x", questions: {} }, { ...decision, questions: { bad: { type: "choice", instructions: "Pick", criteria: [] } } }, { ...decision, questions: { bad: { type: ["noul"], instructions: "Yes?" } } }]) {

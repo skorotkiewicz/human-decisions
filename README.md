@@ -10,6 +10,16 @@ bun test
 
 The server listens on `127.0.0.1:8001`. Configure `PORT` and `DATABASE_PATH` through environment variables. The default database is `decisions.sqlite`; requests and answers survive restarts.
 
+## Website
+
+Open **http://127.0.0.1:8001** after starting the server. The responsive workspace lets you:
+
+- Submit context and multiple yes/no, choice, or scale questions.
+- Refresh the unanswered inbox and submit human answers with native controls.
+- Look up a request ID to check its status and results.
+
+The website uses the same API, with no frontend dependencies or separate build step. Choice and scale controls submit definite selections (one-hot probabilities); confidence is adjustable. Use the API for mixed distributions and fractional scores. Keep your request ID to check the answer later; refresh and result checks are manual.
+
 ## API flow
 
 1. A client submits the request format from `example.md` to `POST /v1/decisions`.
@@ -45,4 +55,4 @@ curl http://127.0.0.1:8001/v1/decisions/ID
 
 Choice and score probabilities must cover exactly every option and sum to 1, within a tolerance of 0.000001. Confidence ranges from 0 to 1. Humans supply all probabilities, confidence, and scores; the server validates their shape and bounds, not their subjective judgment. Malformed submissions return **400** without consuming a pending request; unknown IDs return **404**. Request bodies are limited to 1 MiB.
 
-This is a local, trusted-agent service without authentication or task claiming. Polling does not reserve work, so agents can duplicate effort. Put authentication and access controls in front of it before exposing sensitive questions or allowing remote agents. There is no web UI or AI answering layer.
+This is a local, trusted-agent service without authentication or task claiming. Polling does not reserve work, so agents can duplicate effort. Put authentication and access controls in front of it before exposing sensitive questions or allowing remote agents. There is no AI answering layer.

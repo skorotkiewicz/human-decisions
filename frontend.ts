@@ -231,8 +231,8 @@ function setup() {
         const instructions = get<HTMLInputElement>(".question-instructions", fieldset).value.trim();
         if (!instructions) throw new Error("Please write a question.");
         const labels = get<HTMLTextAreaElement>(".question-criteria", fieldset).value.split("\n").map(label => label.trim()).filter(Boolean);
-        if (type !== "noul" && labels.length < 2) throw new Error("Add at least two options, one per line.");
-        const criteria = type === "score" ? labels : Object.fromEntries(labels.map((label, index) => [String(index), label]));
+        if (type !== "noul" && (labels.length < 2 || new Set(labels).size !== labels.length)) throw new Error("Add at least two distinct options, one per line.");
+        const criteria = type === "score" ? labels : Object.fromEntries(labels.map(label => [label, label]));
         return [fieldset.dataset.name!, { type, instructions, ...(type === "noul" ? {} : { criteria }) }];
       }));
       const state = get<HTMLTextAreaElement>("#context").value.trim();

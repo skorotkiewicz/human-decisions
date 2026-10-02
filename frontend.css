@@ -1,5 +1,3 @@
-@import url("data:text/css,");
-
 :root { color-scheme: light; --paper: #f6f5ee; --ink: #263d32; --green: #244c3c; --muted: #69766d; --line: #dfe3d8; --soft: #eaf0e4; --gold: #dfbc69; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); }
 * { box-sizing: border-box; }
 body { margin: 0; }
