@@ -38,6 +38,14 @@ SYSTEMONE_URL=http://192.168.0.124:8888/v1/systemone \
 POLL_INTERVAL_MS=3000 bun run bot.ts
 ```
 
+Optional model authentication:
+
+```sh
+SYSTEMONE_API_KEY='<apikey>' bun run bot.ts
+```
+
+When set, the bot sends `Authorization: Bearer <apikey>` only to `SYSTEMONE_URL`. Leave it unset or empty for no authentication. Polling and answer submissions remain anonymous. Use HTTPS for remote model endpoints to protect the key.
+
 `DECISIONS_URL` defaults to localhost using `PORT` (or 8001). Requests run sequentially with a 60-second timeout; each batch is followed by the polling delay. Failed requests remain pending and are retried. If a person or another bot answers first, a 409 is skipped. Stop with Ctrl+C.
 
 This bot is opt-in and submits **AI-generated answers**. The current API does not track answer authorship: its `provider: "human"` field and human-facing website labels do not distinguish bot submissions from human ones.

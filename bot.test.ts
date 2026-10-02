@@ -2,6 +2,32 @@ import { expect, spyOn, test } from "bun:test";
 import { startServer } from "./index";
 import { pollOnce } from "./bot";
 
+test("optional Bearer auth goes only to the model endpoint", async () => {
+  const requests: { path: string; authorization: string | null }[] = [];
+  const service = Bun.serve({
+    hostname: "127.0.0.1", port: 0,
+    fetch(req) {
+      const path = new URL(req.url).pathname;
+      requests.push({ path, authorization: req.headers.get("Authorization") });
+      if (path === "/poll") return Response.json({ decisions: [{ id: "test", state: "The box is blue.", questions: { box: { type: "noul", instructions: "Is the box blue?" } } }] });
+      if (path === "/v1/systemone") return Response.json({ answers: { box: { type: "noul", noul: 1 } } });
+      return Response.json({ status: "answered" });
+    },
+  });
+  try {
+    for (const apiKey of [undefined, "", "test-api-key"]) {
+      await pollOnce(String(service.url), new URL("/v1/systemone", service.url).href, apiKey);
+      expect(requests.splice(0)).toEqual([
+        { path: "/poll", authorization: null },
+        { path: "/v1/systemone", authorization: apiKey ? `Bearer ${apiKey}` : null },
+        { path: "/v1/decisions/test/answers", authorization: null },
+      ]);
+    }
+  } finally {
+    await service.stop(true);
+  }
+});
+
 test("bot forwards complete requests, retries failures, and respects existing answers", async () => {
   const app = startServer({ database: ":memory:", port: 0 });
   const serviceUrl = `http://127.0.0.1:${app.server.port}`;

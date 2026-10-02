@@ -1,10 +1,13 @@
 const object = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-async function json(url: string | URL, body?: unknown) {
+async function json(url: string | URL, body?: unknown, apiKey?: string) {
   const response = await fetch(url, {
     method: body === undefined ? "GET" : "POST",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: {
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(60_000),
     cache: "no-store",
@@ -15,7 +18,7 @@ async function json(url: string | URL, body?: unknown) {
   return data;
 }
 
-export async function pollOnce(decisionsUrl: string, systemoneUrl: string) {
+export async function pollOnce(decisionsUrl: string, systemoneUrl: string, apiKey?: string) {
   const queue = await json(new URL("/poll", decisionsUrl));
   if (!Array.isArray(queue.decisions)) throw new Error("/poll: expected a decisions array");
   // ponytail: sequential inference for a single model backend; add concurrency if it supports parallel requests.
@@ -24,7 +27,7 @@ export async function pollOnce(decisionsUrl: string, systemoneUrl: string) {
       if (!object(decision) || typeof decision.id !== "string" || !decision.id || !Object.hasOwn(decision, "state") || !object(decision.questions)) {
         throw new Error("/poll: malformed decision");
       }
-      const prediction = await json(systemoneUrl, { state: decision.state, questions: decision.questions });
+      const prediction = await json(systemoneUrl, { state: decision.state, questions: decision.questions }, apiKey);
       if (!object(prediction.answers)) throw new Error("SystemOne: expected an answers object");
       const response = await fetch(new URL(`/v1/decisions/${encodeURIComponent(decision.id)}/answers`, decisionsUrl), {
         method: "POST",
@@ -53,7 +56,7 @@ if (import.meta.main) {
   new URL(systemoneUrl);
   console.log(`Bot watching ${decisionsUrl}/poll using ${systemoneUrl}`);
   while (true) {
-    try { await pollOnce(decisionsUrl, systemoneUrl); }
+    try { await pollOnce(decisionsUrl, systemoneUrl, Bun.env.SYSTEMONE_API_KEY); }
     catch (error) { console.error(error instanceof Error ? error.message : error); }
     await Bun.sleep(interval);
   }
