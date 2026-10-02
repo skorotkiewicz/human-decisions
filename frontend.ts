@@ -182,7 +182,7 @@ function setup() {
     try {
       const { decisions } = await api<{ decisions: Pending[] }>("/poll");
       get("#queue-count").textContent = String(decisions.length);
-      get("#queue-count").setAttribute("aria-label", `${decisions.length} open requests`);
+      get("#answer-tab").setAttribute("aria-label", `Inbox, ${decisions.length} open requests`);
       queueList.replaceChildren();
       if (!decisions.length) queueList.append(el("p", "All caught up. New requests will appear here when you refresh.", "muted small"));
       for (const decision of decisions) {
