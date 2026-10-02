@@ -41,7 +41,7 @@ test("humans poll, answer all question types, and retrieve durable decisions", a
     expect((await request("/v1/decisions/missing/answers", { answers })).status).toBe(404);
     const submitted = await request("/v1/decisions", decision);
     expect(submitted.status).toBe(202);
-    const { id } = await submitted.json();
+    const { id } = await submitted.json() as { id: string };
     const path = `/v1/decisions/${id}`;
     expect(submitted.headers.get("Location")).toBe(path);
     const pending = { id, status: "pending", ...decision };
