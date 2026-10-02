@@ -25,7 +25,7 @@ function validateDecision(input: unknown): Decision {
   for (const [name, question] of Object.entries(input.questions)) {
     check(name.trim() && object(question), "Each question needs a name and an object");
     check(typeof question.instructions === "string" && question.instructions.trim(), `${name}: instructions are required`);
-    check(["noul", "choice", "score"].includes(String(question.type)), `${name}: unknown question type`);
+    check(question.type === "noul" || question.type === "choice" || question.type === "score", `${name}: unknown question type`);
     if (question.type === "score") {
       check(Array.isArray(question.criteria) && question.criteria.length >= 2 && question.criteria.every(label => typeof label === "string" && label.trim()), `${name}: score criteria must contain at least two labels`);
     } else if (question.type === "choice" || question.criteria !== undefined) {
