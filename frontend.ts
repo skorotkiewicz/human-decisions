@@ -124,6 +124,7 @@ function setup() {
       const prefix = `answer-${index}`;
       if (question.type === "noul") {
         const control = range("Probability of yes", `${prefix}-probability`, 50, 0, 100, 1);
+        control.container.className = "probability";
         const endpoints = el("div", "", "range-label");
         const criteria = question.criteria as Record<string, string> | undefined;
         endpoints.append(el("span", criteria?.false ?? "No"), el("span", criteria?.true ?? "Yes"));
